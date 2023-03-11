@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 
 #include "proxy.h"
 
@@ -79,7 +80,8 @@ void proxy_sendToPeers(char * originAddr, char * message)
         int ep_socket = socket(AF_INET, SOCK_DGRAM, 0);
         if(ep_socket < 0)
         {
-            printf("Something went wrong with creating socket to send to peer.");
+            printf("Something went wrong with creating socket to send to peer.\n");
+            printf("Error: %s\n", strerror(errno));
         }
         else
         {
