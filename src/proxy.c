@@ -104,6 +104,8 @@ void proxy_sendToPeers(char * originAddr, char * message)
             {
                 printf("Failure relaying message to peer: %s\n", proxy_peers[ep]);
             }
+
+            close(ep_socket);
         }
     }
     
