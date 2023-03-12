@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -68,6 +69,12 @@ void proxy_init()
 //   >  10.0.0.21|[MOTD]Brian World![/MOTD][AD]39239[/AD]
 void proxy_sendToPeers(char * originAddr, char * message)
 {
+    //  First thing, we need to make sure that this message did not originate
+    //  from a peer.  If this message did originate from a peer, then relaying
+    //  it back to that peer will cause that peer to send it back..  creating
+    //  an infinite loop of relays.
+    if(proxy_isPeer(originAddr)) { return; }
+
     char outgoingMessage[512];
     sprintf(&outgoingMessage[0], "%s|%s", originAddr, message);
 
@@ -202,6 +209,18 @@ void proxy_loadPeers()
         proxy_peerCount++;
     }
 
+}
+
+bool proxy_isPeer(char * peerAddr)
+{
+    unsigned short ep = 0;
+    
+    for(ep = 0; ep < proxy_peerCount; ep++)
+    {
+        if(strcmp(proxy_peers[ep], peerAddr) == 0) { return true; }
+    }
+
+    return false;
 }
 
 //  Check and return whether there is a message available.
