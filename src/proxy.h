@@ -14,3 +14,4 @@ char * proxy_getMessage();
 char * proxy_getRemoteAddr();
 void proxy_loadPeers();
 bool proxy_isPeer( char * peerAddr);
+bool proxy_isLocal(char * originAddr);

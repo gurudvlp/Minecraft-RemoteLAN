@@ -8,11 +8,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ifaddrs.h>
 #include <time.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 
 #include "proxy.h"
+
+#define reverse_bytes_32(num) ( ((num & 0xFF000000) >> 24) | ((num & 0x00FF0000) >> 8) | ((num & 0x0000FF00) << 8) | ((num & 0x000000FF) << 24) )
 
 //  Socket handle
 int proxy_sockethnd;
@@ -73,7 +76,12 @@ void proxy_sendToPeers(char * originAddr, char * message)
     //  from a peer.  If this message did originate from a peer, then relaying
     //  it back to that peer will cause that peer to send it back..  creating
     //  an infinite loop of relays.
+    //
+    //  We also check if the origin of this message is from a local subnet.  If
+    //  it is not, we do NOT want to forward it.  It came from somewhere else.
+    if(!proxy_isLocal(originAddr)) { return; }
     if(proxy_isPeer(originAddr)) { return; }
+    
 
     char outgoingMessage[512];
     sprintf(&outgoingMessage[0], "%s|%s", originAddr, message);
@@ -219,6 +227,60 @@ bool proxy_isPeer(char * peerAddr)
     {
         if(strcmp(proxy_peers[ep], peerAddr) == 0) { return true; }
     }
+
+    return false;
+}
+
+bool proxy_isLocal(char * originAddr)
+{
+    struct ifaddrs * interfaces;
+    struct ifaddrs * einterface;
+    getifaddrs(&interfaces);
+
+    struct sockaddr_in * sa;
+    struct sockaddr_in * snm;
+    
+    int32_t originNet = 0;
+    inet_pton(AF_INET, originAddr, (void *)&originNet);
+    originNet = reverse_bytes_32(originNet);
+
+    char * addr;
+    char * netmask;
+    int32_t addrNet = 0;
+    int32_t netmaskNet = 0;
+
+    char strAddr[16];
+
+    for(einterface = interfaces; einterface; einterface = einterface->ifa_next)
+    {
+        if(einterface->ifa_addr && einterface->ifa_addr->sa_family == AF_INET)
+        {
+            sa = (struct sockaddr_in *)einterface->ifa_addr;
+            addr = inet_ntoa(sa->sin_addr);
+            strcpy(strAddr, addr);
+            inet_pton(AF_INET, strAddr, (void *)&addrNet);
+            addrNet = reverse_bytes_32(addrNet);
+            
+            netmask = inet_ntoa(((struct sockaddr_in *)einterface->ifa_netmask)->sin_addr);
+            inet_pton(AF_INET, netmask, (void *)&netmaskNet);
+            netmaskNet = reverse_bytes_32(netmaskNet);
+
+            if((addrNet & netmaskNet) == (originNet & netmaskNet))
+            {
+                freeifaddrs(interfaces);
+                return true;
+            }
+            /*else
+            {
+                printf("? %u %u %u\n", addrNet, netmaskNet, originNet);
+            }*/
+
+            //printf("Addr: %s %s/%s\n", einterface->ifa_name, strAddr, netmask);
+            //printf("\t%p %p\n", addr, netmask);
+        }
+    }
+
+    freeifaddrs(interfaces);
 
     return false;
 }
