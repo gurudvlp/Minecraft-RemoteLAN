@@ -238,7 +238,6 @@ bool proxy_isLocal(char * originAddr)
     getifaddrs(&interfaces);
 
     struct sockaddr_in * sa;
-    struct sockaddr_in * snm;
     
     int32_t originNet = 0;
     inet_pton(AF_INET, originAddr, (void *)&originNet);

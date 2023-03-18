@@ -17,7 +17,7 @@
 #include <netinet/ip.h>
 #include <errno.h>
 
-#include "mc_caster.h"
+#include "mcast_caster.h"
 
 unsigned short mccaster_checksum(unsigned short * ptr, int nbytes);
 

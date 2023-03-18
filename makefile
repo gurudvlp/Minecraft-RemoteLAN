@@ -1,6 +1,6 @@
 OBJ = src/main.c \
-		src/mc_listener.c \
-		src/mc_caster.c \
+		src/mcast_listener.c \
+		src/mcast_caster.c \
 		src/proxy.c
 
 #	Any special libraries

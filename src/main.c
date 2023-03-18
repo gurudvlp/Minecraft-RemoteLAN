@@ -26,8 +26,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "mc_listener.h"
-#include "mc_caster.h"
+#include "mcast_listener.h"
+#include "mcast_caster.h"
 #include "proxy.h"
 
 int main(int argc, char **argv)
